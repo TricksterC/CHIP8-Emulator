@@ -1,0 +1,20 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-std=c17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/usr/include/SDL2",
+      "-D_REENTRANT",
+      "-o",
+      "chip8",
+      "chip8.c"
+    ],
+    "directory": "/home/sru/Programs/chip8_emulator",
+    "file": "/home/sru/Programs/chip8_emulator/chip8.c",
+    "output": "/home/sru/Programs/chip8_emulator/chip8"
+  }
+]
