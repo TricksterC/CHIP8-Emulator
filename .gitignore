@@ -1,0 +1,5 @@
+# Clangd cache
+.cache/
+
+# Compiled Executable
+chip8
