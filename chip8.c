@@ -7,6 +7,7 @@
 #include "SDL.h"
 #include "SDL_events.h"
 #include "SDL_keycode.h"
+#include "SDL_log.h"
 #include "SDL_render.h"
 
 // SDL container object
@@ -34,6 +35,16 @@ typedef enum{
 // CHIP-8 Machine object
 typedef struct{
   emulator_state_t state;
+  uint8_t ram[4096];
+  bool display[64*32];  // Emulate original CHIP-8 resolution pixels
+  uint16_t stack[12];   // Subroutine stack
+  uint8_t V[16];        // Data registers V0-VF
+  uint16_t I;           // Index register
+  uint16_t PC;          // Program Counter
+  uint8_t delay_timer;  // Decrements at 60hz when >0 
+  uint8_t sound_timer;  // Decrements at 60hz and plays tone when >0
+  bool keypad[16];      // Hexadecimal keypad 0x0-0xF
+  const char *rom_name; // Currently running ROM
 } chip8_t;
 
 // Initialize SDL
@@ -83,8 +94,60 @@ bool set_config_from_args(config_t *config, const int argc, char **argv){
 }
 
 // Initialize CHIP-8 Machine
-bool init_chip8(chip8_t *chip8){
-  chip8 -> state = RUNNING; // Default Machine state to on/running 
+bool init_chip8(chip8_t *chip8, char rom_name){
+  const uint32_t entry_point = 0x200; //CHIP-8 ROMs will be laoded to 0x200
+  const uint8_t font[] = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80,  // F
+  };
+
+  // Load font
+  memcpy(&chip8 -> ram[0], font, sizeof(font));
+
+  // Open ROM file
+  FILE *rom = fopen(rom_name, "rb");
+  if(!rom){
+    SDL_Log("ROM file %s is invalid or does not exist\n", rom_name);
+    return false;
+  }
+
+  // Get/check ROM size
+  fseek(rom, 0, SEEK_END);
+  const size_t rom_size = ftell(rom);
+  const size_t max_size = sizeof chip8 -> ram - entry_point;
+  rewind(rom);
+
+  if(rom_size > max_size){
+    SDL_Log("ROM file %s is too big! ROM size: %zu, Max size allowed: %zu\n");
+    return false;
+  }
+  
+  // Load ROM
+  if(fread(&chip8 -> ram[entry_point], rom_size, 1, rom) != 1){
+    SDL_Log("Could not read ROM file %s into ROM memory", rom_name);
+    return false;
+  }
+
+  fclose(rom);
+
+  // Set CHIP-8 machine defaults
+  chip8 -> state = RUNNING;     // Default Machine state to on/running 
+  chip8 -> PC = entry_point;    // Start program counter at ROM entry point 
+  chip8 -> rom_name = rom_name; 
   return true;  // Success
 }
 
@@ -155,7 +218,8 @@ int main(int argc,char **argv){
 
   // Initialize CHIP-8 Machine
   chip8_t chip8 = {0};
-  if(!init_chip8(&chip8)) exit(EXIT_FAILURE);
+  const char *rom_name = argv[1];
+  if(!init_chip8(&chip8, rom_name)) exit(EXIT_FAILURE);
 
   // Initial Screen clear to Background color
   clear_screen(sdl, config);
@@ -164,11 +228,11 @@ int main(int argc,char **argv){
   while(chip8.state != QUIT){
     // Handle user input
     handle_input(&chip8);
-    // if (chip8.state == PAUSED) continue;
+    if (chip8.state == PAUSED) continue;
 
     // Get_time()
     // Emulate CHIP-8 Instructions
-    // Geet_time() elapsed since last get_time();
+    // Get_time() elapsed since last get_time();
 
     // Delay for approximately 60hz/60fps (16.67ms)
     // SDL_Delay(16 - actual time elapsed);
