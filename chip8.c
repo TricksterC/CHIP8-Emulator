@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <string.h>
 
 #include "SDL.h"
 #include "SDL_events.h"
@@ -94,7 +94,7 @@ bool set_config_from_args(config_t *config, const int argc, char **argv){
 }
 
 // Initialize CHIP-8 Machine
-bool init_chip8(chip8_t *chip8, char rom_name){
+bool init_chip8(chip8_t *chip8, const char *rom_name){
   const uint32_t entry_point = 0x200; //CHIP-8 ROMs will be laoded to 0x200
   const uint8_t font[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -132,7 +132,7 @@ bool init_chip8(chip8_t *chip8, char rom_name){
   rewind(rom);
 
   if(rom_size > max_size){
-    SDL_Log("ROM file %s is too big! ROM size: %zu, Max size allowed: %zu\n");
+    SDL_Log("ROM file %s is too big! ROM size: %zu, Max size allowed: %zu\n", rom_name, rom_size, max_size);
     return false;
   }
   
@@ -189,6 +189,15 @@ void handle_input(chip8_t *chip8){
             // Escape Key; Exit window & end program
             chip8 -> state = QUIT;
             return;
+
+          case SDLK_SPACE:
+            // Space bar
+            if(chip8 -> state == RUNNING){
+              chip8 -> state = PAUSED;
+              puts("====== PAUSED ======");  // PAUSED
+            } 
+            else
+              chip8 -> state = RUNNING;      // RESUMED
 
           default:
             break;
