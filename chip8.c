@@ -228,6 +228,38 @@ void handle_input(chip8_t *chip8){
   }
 }
 
+#ifdef DEBUG
+void print_debug_info(chip8_t *chip8){
+  switch ((chip8 -> inst.opcode >> 12 )  & 0x0F){
+
+    case 0x00:
+      if(chip8 -> inst.NN == 0xE0){
+        // 0x00E0: Clear the Screen
+        memset(&chip8 -> display[0], false, sizeof chip8 -> display);
+      }
+      else if(chip8 -> inst.NN == 0xEE){
+        // 0x00EE: Return from Subroutine
+        // Set program counter to last address on subroutine stack ("pop" it off the stack)
+        // so that the next opcode will be gotten from that address.
+        chip8 -> PC = *--chip8 -> stack_ptr;
+      }
+      break;
+      
+    case 0x02:
+      // 0x2NNN: Call Subroutine at NNN
+      // Store current address to return to on subroutine stack ("push" it on the stack)
+      // and set program counter to subroutine address so that the next opcode 
+      // is gotten from there.
+      *chip8 -> stack_ptr++ = chip8 -> PC;  
+      chip8 -> PC = chip8 -> inst.NNN;
+      break;
+
+    default:
+      break; // Unimplemented or invalid opcode
+  }
+}
+#endif /* ifdef DEBUG */
+
 void emulate_instruction(chip8_t *chip8){
   // Get next opcode from RAM 
   chip8 -> inst.opcode = (chip8 -> ram[chip8 -> PC] << 8) | chip8 -> ram[chip8 -> PC + 1];
@@ -240,13 +272,17 @@ void emulate_instruction(chip8_t *chip8){
   chip8 -> inst.X = (chip8 -> inst.opcode >> 8) & 0x0F;
   chip8 -> inst.Y = (chip8 -> inst.opcode >> 4) & 0x0F;
 
-  // Emul(ate opcode
+#ifdef DEBUG
+  print_debug_info(chip8);
+#endif
+
+  // Emulate opcode
   switch ((chip8 -> inst.opcode >> 12 )  & 0x0F){
 
-    case 0x0:
+    case 0x00:
       if(chip8 -> inst.NN == 0xE0){
         // 0x00E0: Clear the Screen
-        memset(&chip8 -> display[0], false, sizeof chip8 -> display);
+        printf("Clear screen");
       }
       else if(chip8 -> inst.NN == 0xEE){
         // 0x00EE: Return from Subroutine
