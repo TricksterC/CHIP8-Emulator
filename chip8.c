@@ -283,6 +283,12 @@ void print_debug_info(chip8_t *chip8){
       }
       break;
       
+     case 0x01:
+      // Ox1NNN: Jump to address NNN
+      //chip8 -> PC = chip8 -> inst.NNN; // Set program counter so that next opcode is from NNN
+      printf("Jump to address NNN (0x%04X)\n", chip8 -> inst.NNN);
+      break;
+
     case 0x02:
       // 0x2NNN: Call Subroutine at NNN
       // Store current address to return to on subroutine stack ("push" it on the stack)
@@ -365,7 +371,12 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
         chip8 -> PC = *--chip8 -> stack_ptr;
       }
       break;
-      
+
+    case 0x01:
+      // Ox1NNN: Jump to address NNN
+      chip8 -> PC = chip8 -> inst.NNN; // Set program counter so that next opcode is from NNN
+      break;
+
     case 0x02:
       // 0x2NNN: Call Subroutine at NNN
       // Store current address to return to on subroutine stack ("push" it on the stack)
