@@ -230,18 +230,23 @@ void handle_input(chip8_t *chip8){
 
 #ifdef DEBUG
 void print_debug_info(chip8_t *chip8){
+  printf("Address: 0x%04X, Opcode: 0x%04X Desc: ", chip8 -> PC -2, chip8 -> inst.opcode);
   switch ((chip8 -> inst.opcode >> 12 )  & 0x0F){
 
     case 0x00:
       if(chip8 -> inst.NN == 0xE0){
         // 0x00E0: Clear the Screen
-        memset(&chip8 -> display[0], false, sizeof chip8 -> display);
+        printf("Clear screen\n");
       }
       else if(chip8 -> inst.NN == 0xEE){
         // 0x00EE: Return from Subroutine
         // Set program counter to last address on subroutine stack ("pop" it off the stack)
         // so that the next opcode will be gotten from that address.
-        chip8 -> PC = *--chip8 -> stack_ptr;
+        printf("Return from subroutine to address 0x%04X\n", *(chip8 -> stack_ptr - 1));
+        //chip8 -> PC = *--chip8 -> stack_ptr;
+      } 
+      else{
+        printf("Unimplemented opcode\n");
       }
       break;
       
@@ -250,15 +255,31 @@ void print_debug_info(chip8_t *chip8){
       // Store current address to return to on subroutine stack ("push" it on the stack)
       // and set program counter to subroutine address so that the next opcode 
       // is gotten from there.
-      *chip8 -> stack_ptr++ = chip8 -> PC;  
-      chip8 -> PC = chip8 -> inst.NNN;
+      //*chip8 -> stack_ptr++ = chip8 -> PC;  
+      //chip8 -> PC = chip8 -> inst.NNN;
       break;
 
+      case 0x06:
+      // 0x6XNN: Set register VX to NN
+      //chip8 -> V[chip8 -> inst.X] = chip8 -> inst.NN;
+      printf("Set V%X to NN (0x%02X)\n",chip8 -> inst.X, chip8 -> inst.NN);
+      break;
+
+
+      case 0x0A:
+        // 0xANNN: Set Index register I to NNN
+        //chip8 -> I = chip8 -> inst.NNN;
+        printf("Set I to NNN (0x%04X)\n", chip8 -> inst.NNN);
+        break;
+
+
+
     default:
+      printf("Unimplemented opcode\n");
       break; // Unimplemented or invalid opcode
   }
 }
-#endif /* ifdef DEBUG */
+#endif
 
 void emulate_instruction(chip8_t *chip8){
   // Get next opcode from RAM 
@@ -282,7 +303,7 @@ void emulate_instruction(chip8_t *chip8){
     case 0x00:
       if(chip8 -> inst.NN == 0xE0){
         // 0x00E0: Clear the Screen
-        printf("Clear screen");
+        memset(chip8 -> display, false, sizeof(chip8 -> display));
       }
       else if(chip8 -> inst.NN == 0xEE){
         // 0x00EE: Return from Subroutine
@@ -300,6 +321,17 @@ void emulate_instruction(chip8_t *chip8){
       *chip8 -> stack_ptr++ = chip8 -> PC;  
       chip8 -> PC = chip8 -> inst.NNN;
       break;
+
+    case 0x06:
+      // 0x6XNN: Set register VX to NN
+      chip8 -> V[chip8 -> inst.X] = chip8 -> inst.NN;
+      break;
+
+    case 0x0A:
+      // 0xANNN: Set Index register I to NNN
+      chip8 -> I = chip8 -> inst.NNN;
+      break;
+    
 
 
 
