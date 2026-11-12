@@ -23,6 +23,7 @@ typedef struct{
   uint32_t fg_color;          // Foreground color RGBA8888
   uint32_t bg_color;          // Background color RGBA8888
   uint32_t scale_factor;      // Amount to scale a CHIP-8 pixel by ex. 20x will be a 20x larger window
+  bool pixels_outlines;       // Draw pixels outlines, yes or no
 } config_t;
 
 // Emulator states
@@ -95,6 +96,7 @@ bool set_config_from_args(config_t *config, const int argc, char **argv){
     .fg_color = 0xFFFFFFFF,  // WHITE
     .bg_color = 0x000000FF,  // BLACK
     .scale_factor = 20,      // Default resolution will be 1280x640
+    .pixels_outlines = true, // Draw pixels outlines by default
   };
 
   // Override defaults from passed in arguments
@@ -209,6 +211,13 @@ void update_screen(const sdl_t sdl, const config_t config, const chip8_t chip8){
       // Pixel is on, draw foreground color
       SDL_SetRenderDrawColor(sdl.renderer, fg_r, fg_g, fg_b, fg_a);
       SDL_RenderFillRect(sdl.renderer, &rect);
+
+      // If user requested drawing pixel outlines, draw those here
+      if(config.pixels_outlines){
+        SDL_SetRenderDrawColor(sdl.renderer, bg_r, bg_g, bg_b, bg_a);
+        SDL_RenderDrawRect(sdl.renderer, &rect);
+      }
+      
     }
     else{
       // Pixel is off, draw background color
@@ -309,11 +318,7 @@ void print_debug_info(chip8_t *chip8){
       //chip8 -> V[chip8 -> inst.X] += chip8 -> inst.NN;
       printf("Set V%X (0x%02X) += NN (0x%02X). Result: 0x%02X\n",chip8 -> inst.X, 
           chip8 -> V[chip8 -> inst.X], chip8 -> inst.NN, chip8 -> V[chip8 -> inst.X] + chip8 -> inst.NN);
-
-
       break;
-
-
 
       case 0x0A:
         // 0xANNN: Set Index register I to NNN
@@ -330,8 +335,6 @@ void print_debug_info(chip8_t *chip8){
             " from memory location I (0x%04X). Set VF = 1 if any pixels are turned off.\n",
             chip8 -> inst.N, chip8 -> inst.X, chip8 -> V[chip8 -> inst.X], chip8 -> inst.Y, chip8 -> V[chip8 -> inst.Y], chip8 -> I);
         break;
-
-
 
     default:
       printf("Unimplemented opcode\n");
