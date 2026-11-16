@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 #include "SDL.h"
 #include "SDL_events.h"
@@ -378,7 +379,16 @@ void print_debug_info(chip8_t *chip8){
           chip8 -> V[0], 
           chip8 -> inst.NNN, 
           chip8 -> V[0] + chip8 -> inst.NNN);
-      break;
+      break;  
+
+    case 0x0C:
+       // 0xCNNN: Sets register VX = rand() % 256 & NN (Bitwise AND)
+       printf("Set V%X = rand() %% 256 & NN (0x%02X)\n",
+           chip8 -> inst.X,
+           chip8 -> inst.NN);
+       break;
+
+
 
     case 0x0D:
        // 0xDXYN: Draw N-height sprite at coordinates X and Y; Read from memory location I
@@ -613,40 +623,45 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
           chip8 -> V[chip8 -> inst.X] ^= chip8 -> V[chip8 -> inst.Y];
           break;
 
-        case 4: 
+        case 4:{
           // 0x8XY4: Set register VX += VY, Set VF to 1 if carry
           const bool carry = (uint16_t)(chip8 -> V[chip8 -> inst.X] + chip8 -> V[chip8 -> inst.Y] > 255);
           chip8 -> V[chip8 -> inst.X] += chip8 -> V[chip8 -> inst.Y];
           chip8 -> V[0xF] = carry;
           break;
+        }
 
-        case 5: 
+        case 5:{ 
           // 0x8XY5: Set register VX -= VY, Set VF to 1 if there is not a borrow (result is positive/0)
           const bool no_borrow1 = (chip8 -> V[chip8 -> inst.Y] <= chip8 -> V[chip8 -> inst.X]);
           chip8 -> V[chip8 -> inst.X] -= chip8 -> V[chip8 -> inst.Y];
           chip8 -> V[0xF] = no_borrow1;
           break;
+        }
 
-        case 6: 
+        case 6:{
           // 0x8XY6: Set register VX >>= 1, store shifted off bit in VF 
           const bool bit1 =  chip8 -> V[chip8 -> inst.X] & 1;
           chip8 -> V[chip8 -> inst.X] >>= 1;
           chip8 -> V[0xF] = bit1;
           break;
+        }
 
-        case 7:
+        case 7:{
           // Ox8XY7: Set register VX = VY - VX, Set VF to 1 if there is not a borrow (result is positive/0)
           const bool no_borrow2 = chip8 -> V[chip8 -> inst.X] <= chip8 -> V[chip8 -> inst.Y];
           chip8 -> V[chip8 -> inst.X] = chip8 -> V[chip8 -> inst.Y] - chip8 -> V[chip8 -> inst.X];
           chip8 -> V[0xF] = no_borrow2;
           break;
+        }
 
-        case 0xE:
+        case 0xE:{
           // 0x8XYE: Store register VX <<= 1, store shifter off but in VF 
           const bool bit2 = (chip8 -> V[chip8 -> inst.X] & 0x80) >> 7;
           chip8 -> V[chip8 -> inst.X] <<= 1;
           chip8 -> V[0xF] = bit2;
           break;
+        }
 
         default:
           // Wrong or Unimplemented
@@ -669,6 +684,11 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
     case 0x0B:
       // 0xBNNN: Jump to V0 + NNN
       chip8 -> PC = chip8 -> V[0] + chip8 -> inst.NNN;
+      break;
+
+    case 0x0C:
+      // 0xCNNN: Sets register VX = rand() % 256 & NN (Bitwise AND)
+      chip8 -> V[chip8 -> inst.X] = (rand() % 256) & chip8 -> inst.NN;
       break;
 
     case 0x0D:
@@ -739,6 +759,9 @@ int main(int argc,char **argv){
 
   // Initial Screen clear to Background color
   clear_screen(sdl, config);
+
+  // Seed Random number Generator
+  srand(time(NULL));
 
   // Main emulator loop
   while(chip8.state != QUIT){
