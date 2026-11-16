@@ -310,6 +310,8 @@ void print_debug_info(chip8_t *chip8){
       // is gotten from there.
       //*chip8 -> stack_ptr++ = chip8 -> PC;  
       //chip8 -> PC = chip8 -> inst.NNN;
+      printf("Call subroutine at NNN (0x%04X), return address 0x%04X\n",
+         chip8 -> inst.NNN, chip8 -> PC);
       break;
 
     case 0x03:
@@ -573,7 +575,7 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
 
     case 0x05:
       // 0x5XY0: Check if VX == VY, if yes skip the next instruction
-      if(chip8 -> inst.NN != 0) break;
+      if(chip8 -> inst.N != 0) break;
       
       if(chip8 -> V[chip8 -> inst.X] == chip8 -> V[chip8 -> inst.Y])
         chip8 -> PC += 2; // Skip next opcode or instruction
@@ -613,37 +615,37 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
 
         case 4: 
           // 0x8XY4: Set register VX += VY, Set VF to 1 if carry
-          if((uint16_t)chip8 -> V[chip8 -> inst.X] + chip8 -> V[chip8 -> inst.Y] > 255)
-            chip8 -> V[0xF] = 1;
+          const bool carry = (uint16_t)(chip8 -> V[chip8 -> inst.X] + chip8 -> V[chip8 -> inst.Y] > 255);
           chip8 -> V[chip8 -> inst.X] += chip8 -> V[chip8 -> inst.Y];
+          chip8 -> V[0xF] = carry;
           break;
 
         case 5: 
           // 0x8XY5: Set register VX -= VY, Set VF to 1 if there is not a borrow (result is positive/0)
-          if(chip8 -> V[chip8 -> inst.Y] <= chip8 -> V[chip8 -> inst.X])
-            chip8 -> V[0xF] = 1;
-
+          const bool no_borrow1 = (chip8 -> V[chip8 -> inst.Y] <= chip8 -> V[chip8 -> inst.X]);
           chip8 -> V[chip8 -> inst.X] -= chip8 -> V[chip8 -> inst.Y];
+          chip8 -> V[0xF] = no_borrow1;
           break;
 
         case 6: 
           // 0x8XY6: Set register VX >>= 1, store shifted off bit in VF 
-          chip8 -> V[0xF] = chip8 -> V[chip8 -> inst.X] & 1;
+          const bool bit1 =  chip8 -> V[chip8 -> inst.X] & 1;
           chip8 -> V[chip8 -> inst.X] >>= 1;
+          chip8 -> V[0xF] = bit1;
           break;
 
         case 7:
           // Ox8XY7: Set register VX = VY - VX, Set VF to 1 if there is not a borrow (result is positive/0)
-          if(chip8 -> V[chip8 -> inst.X] <= chip8 -> V[chip8 -> inst.Y])
-            chip8 -> V[0xF] = 1;
-
+          const bool no_borrow2 = chip8 -> V[chip8 -> inst.X] <= chip8 -> V[chip8 -> inst.Y];
           chip8 -> V[chip8 -> inst.X] = chip8 -> V[chip8 -> inst.Y] - chip8 -> V[chip8 -> inst.X];
+          chip8 -> V[0xF] = no_borrow2;
           break;
 
         case 0xE:
           // 0x8XYE: Store register VX <<= 1, store shifter off but in VF 
-          chip8 -> V[0xF] = (chip8 -> V[chip8 -> inst.X] & 0x80) >> 7;
+          const bool bit2 = (chip8 -> V[chip8 -> inst.X] & 0x80) >> 7;
           chip8 -> V[chip8 -> inst.X] <<= 1;
+          chip8 -> V[0xF] = bit2;
           break;
 
         default:
