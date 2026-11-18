@@ -617,7 +617,7 @@ void print_debug_info(chip8_t *chip8){
 
         case 0x29:
           // 0xFX29: Set register I to sprite location in memory for character in VX (0x0 - 0XF)
-          printf("Set I to sprite location in memory for character in VX 0x%02X. Result (VX*5) = 0x%02X\n",
+          printf("Set I to sprite location in memory for character in V%X 0x%02X. Result (VX*5) = 0x%02X\n",
                chip8 -> I,
                chip8 -> V[chip8 -> inst.X],
                chip8 -> V[chip8 -> inst.X] * 5);
@@ -893,6 +893,21 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
           // 0xFX29: Set register I to sprite location in memory for character in VX (0x0 - 0XF)
           chip8 -> I = chip8 -> V[chip8 -> inst.X] * 5;
           break;
+
+        case 0x33:{
+          // 0xFX33: Store BCD representation of VX at memory offset from I;
+          //    I = hundred's place, I + 1 = ten's place, I + 2 = one's place
+          uint8_t bcd = chip8 -> V[chip8 -> inst.X];
+          chip8 -> ram[chip8 -> I+2] = bcd % 10;
+          bcd /= 10;
+
+          chip8 -> ram[chip8 -> I+1] = bcd % 10;
+          bcd /= 10;
+
+          chip8 -> ram[chip8 -> I] = bcd % 10;
+          bcd /= 10;
+          break;
+        }
 
         default: 
           break;
