@@ -578,17 +578,28 @@ void print_debug_info(chip8_t *chip8){
             chip8 -> keypad[chip8 -> V[chip8 -> inst.X]]);
       }
       break;
-
+    
     case 0x0F:
       switch(chip8 -> inst.NN){
         case 0x0A:
-          // 0xFX0A: VX = get_key()
+          // 0xFX0A: VX = get_key(); Await until a keypress, and store in VX
+          printf("Await until a key is pressed; Store key in V%X\n",
+              chip8 -> inst.X);
+          break;
+
+        case 0x1E:
+          // 0xFX1E: I += VX; Add VX to register I. For non-Amiga CHIP-8, does not affect VF 
+          printf("I (0x%04X) += V%X (0x%02X); Result (I): 0x%04X\n",
+              chip8 -> I, 
+              chip8 -> inst.X,
+              chip8 -> V[chip8 -> inst.X],
+              chip8 -> I + chip8 -> V[chip8 -> inst.X]);
           break;
 
         default: 
           break;
       }
-
+      break;
 
     default:
       printf("Unimplemented opcode\n");
@@ -821,6 +832,19 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
         case 0x0A:
           // 0xFX0A: VX = get_key(); Await until a keypress, and store in VX
           bool any_key_pressed = false;
+          for(uint8_t i = 0; i < sizeof chip8 -> keypad; i++){
+            chip8 -> V[chip8 -> inst.X] = i;  // i = key (offset into keypad array)
+            any_key_pressed = true; 
+            break;
+          }
+         
+          // If no key has been pressed yet, keep getting the current opcode & running the instruction 
+          if(!any_key_pressed) chip8 -> PC -= 2;
+          break;
+
+        case 0x1E:
+          // 0xFX1E: I += VX; Add VX to register I. For non-Amiga CHIP-8, does not affect VF 
+          chip8 -> I += chip8 -> V[chip8 -> inst.X];
           break;
 
         default: 
