@@ -623,6 +623,34 @@ void print_debug_info(chip8_t *chip8){
                chip8 -> V[chip8 -> inst.X] * 5);
           break;
 
+        case 0x33:
+          // 0xFX33: Store BCD representation of VX at memory offset from I;
+          //    I = hundred's place, I + 1 = ten's place, I + 2 = one's place
+          printf("Store BCD representation of V%X (0x%02X) at memory from I (0x%04X)\n",
+              chip8 -> inst.X,
+              chip8 -> V[chip8 -> inst.X],
+              chip8 -> I);
+          break;
+
+        case 0x55:
+          // 0xFX55: Register dump V0-VX inclusive to memory offset from I;
+          //  SCHIP does not increment I, CHIP-8 does increment I 
+          printf("Register dump from V0 to V%X (0x%02X) inclusive at memory from I (0x%04X)\n",
+              chip8 -> inst.X,
+              chip8 -> V[chip8 -> inst.X],
+              chip8 -> I);
+          break;
+
+        case 0x65:
+          // 0xFX55: Register load V0-VX inclusive to memory offset from I;
+          //  SCHIP does not increment I, CHIP-8 does increment I 
+          printf("Register load from V0 to V%X (0x%02X) inclusive at memory from I (0x%04X)\n",
+              chip8 -> inst.X,
+              chip8 -> V[chip8 -> inst.X],
+              chip8 -> I);
+          break;
+
+
         default: 
           break;
       }
@@ -908,6 +936,23 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
           bcd /= 10;
           break;
         }
+
+        case 0x55:
+          // 0xFX55: Register dump V0-VX inclusive to memory offset from I;
+          //  SCHIP does not increment I, CHIP-8 does increment I 
+          //  NOTE: Could make this a config flag to use SCHIP or CHIP-8 logic for I
+          for(uint8_t i = 0; i <= chip8 -> inst.X; i++)
+            chip8 -> ram[chip8 -> I + i] = chip8 -> V[i];
+          break;
+
+        case 0x65:
+          // 0xFX55: Register load V0-VX inclusive to memory offset from I;
+          //  SCHIP does not increment I, CHIP-8 does increment I 
+          for(uint8_t i = 0; i <= chip8 -> inst.X; i++)
+            chip8 -> V[i] = chip8 -> ram[chip8 -> I + i];
+
+          break;
+
 
         default: 
           break;
