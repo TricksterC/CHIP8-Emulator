@@ -615,6 +615,14 @@ void print_debug_info(chip8_t *chip8){
             chip8 -> V[chip8 -> inst.X]);
           break;
 
+        case 0x29:
+          // 0xFX29: Set register I to sprite location in memory for character in VX (0x0 - 0XF)
+          printf("Set I to sprite location in memory for character in VX 0x%02X. Result (VX*5) = 0x%02X\n",
+               chip8 -> I,
+               chip8 -> V[chip8 -> inst.X],
+               chip8 -> V[chip8 -> inst.X] * 5);
+          break;
+
         default: 
           break;
       }
@@ -879,6 +887,11 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
         case 0x18:
           // 0xFX18: sound timer = VX
           chip8 -> sound_timer = chip8 -> V[chip8 -> inst.X];
+          break;
+
+        case 0x29:
+          // 0xFX29: Set register I to sprite location in memory for character in VX (0x0 - 0XF)
+          chip8 -> I = chip8 -> V[chip8 -> inst.X] * 5;
           break;
 
         default: 
