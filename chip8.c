@@ -310,8 +310,6 @@ void handle_input(chip8_t *chip8){
           case SDLK_v: chip8 -> keypad[0xF] = false; break;
           
           default: break;
-
-
     }
 
   }
@@ -590,10 +588,31 @@ void print_debug_info(chip8_t *chip8){
         case 0x1E:
           // 0xFX1E: I += VX; Add VX to register I. For non-Amiga CHIP-8, does not affect VF 
           printf("I (0x%04X) += V%X (0x%02X); Result (I): 0x%04X\n",
-              chip8 -> I, 
-              chip8 -> inst.X,
-              chip8 -> V[chip8 -> inst.X],
-              chip8 -> I + chip8 -> V[chip8 -> inst.X]);
+            chip8 -> I, 
+            chip8 -> inst.X,
+            chip8 -> V[chip8 -> inst.X],
+            chip8 -> I + chip8 -> V[chip8 -> inst.X]);
+          break;
+        
+        case 0x07:
+          // 0xFX07: VX = delay_timer
+          printf("Set V%X = delay timer value (0x%02X)\n",
+            chip8 -> inst.X,
+            chip8 -> delay_timer);
+          break;
+
+        case 0x15:
+          // 0xFX15: delay timer = VX
+          printf("Set delay timer value = V%X (0x%02X)\n",
+            chip8 -> inst.X,
+            chip8 -> V[chip8 -> inst.X]);
+          break;
+
+        case 0x18:
+          // 0xFX18: sound timer = VX
+          printf("Set delay timer value = V%X (0x%02X)\n",
+            chip8 -> inst.X,
+            chip8 -> V[chip8 -> inst.X]);
           break;
 
         default: 
@@ -845,6 +864,21 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
         case 0x1E:
           // 0xFX1E: I += VX; Add VX to register I. For non-Amiga CHIP-8, does not affect VF 
           chip8 -> I += chip8 -> V[chip8 -> inst.X];
+          break;
+
+        case 0x07:
+          // 0xFX07: VX = delay_timer
+          chip8 -> V[chip8 -> inst.X] = chip8 -> delay_timer;
+          break;
+
+        case 0x15:
+          // 0xFX15: delay timer = VX
+          chip8 -> delay_timer = chip8 -> V[chip8 -> inst.X];
+          break;
+
+        case 0x18:
+          // 0xFX18: sound timer = VX
+          chip8 -> sound_timer = chip8 -> V[chip8 -> inst.X];
           break;
 
         default: 
