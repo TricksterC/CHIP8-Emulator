@@ -23,7 +23,7 @@ This project is currently a work in progress. The goal is to implement the CHIP-
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/TricksterC/CHIP8-Emulator
 cd chip8-emulator
 ```
 
