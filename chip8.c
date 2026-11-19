@@ -10,6 +10,7 @@
 #include "SDL_keycode.h"
 #include "SDL_log.h"
 #include "SDL_render.h"
+#include "SDL_timer.h"
 
 // SDL container object
 typedef struct {
@@ -25,6 +26,7 @@ typedef struct{
   uint32_t bg_color;          // Background color RGBA8888
   uint32_t scale_factor;      // Amount to scale a CHIP-8 pixel by ex. 20x will be a 20x larger window
   bool pixels_outlines;       // Draw pixels outlines, yes or no
+  uint32_t insts_per_second;  // CHIP-8 CPU "clock rate" or hz
 } config_t;
 
 // Emulator states
@@ -98,6 +100,7 @@ bool set_config_from_args(config_t *config, const int argc, char **argv){
     .bg_color = 0x000000FF,  // BLACK
     .scale_factor = 20,      // Default resolution will be 1280x640
     .pixels_outlines = true, // Draw pixels outlines by default
+    .insts_per_second = 500, // Number of instructions to emulate in 1 second (clock rate of CPU)
   };
 
   // Override defaults from passed in arguments
@@ -965,6 +968,11 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
 
 }
 
+// Update CHIP-8 delay and sound timers every 60hz
+void update_timers(&chip8){
+
+}
+
 // The main function
 int main(int argc,char **argv){
   // Default usage message for args 
@@ -999,18 +1007,27 @@ int main(int argc,char **argv){
     handle_input(&chip8);
     if (chip8.state == PAUSED) continue;
 
-    // Get_time()
+    // Get time before running instructions 
+    const uint64_t start_frame_time = SDL_GetPerformanceCounter();
 
     // Emulate CHIP-8 Instructions
-    emulate_instruction(&chip8, config);
+    for(uint32_t i = 0; i < config.insts_per_second / 60; i++)
+      emulate_instruction(&chip8, config);
 
-    // Get_time() elapsed since last get_time();
+    // Get time elapsed after running instruction
+    const uint64_t end_frame_time = SDL_GetPerformanceCounter();
 
-    // Delay for approximately 60hz/60fps (16.67ms)
+    // Delay for approximately 60hz/60fps (16.67ms) or actual time elapsed
+    const double time_elapsed = (double)((end_frame_time - start_frame_time) / 1000) / SDL_GetPerformanceFrequency();
+
     // SDL_Delay(16 - actual time elapsed);
-    SDL_Delay(16);
+    SDL_Delay(16.67f > time_elapsed ? 16.67 - time_elapsed : 0);
+
     // Update window with changes
     update_screen(sdl, config, chip8);
+    
+    // Update delay and sound timers 
+    update_timers(&chip8);
   }
 
   // Final cleanup
