@@ -50,21 +50,26 @@ All ROMs belong to their respective authors. The author and year are
 included in most filenames, and the original archive README and
 changelog are kept in `roms/`.
 
+## ROMs
+
+The `roms/` folder contains:
+
+- **Test ROMs** (`roms/*.ch8`) used to verify opcode correctness
+- **Games, demos, hires and programs** from the
+  *Chip-8 Program Pack* by Revival Studios
+
+The pack's original README is included unmodified as `roms/README.txt`.
+All ROMs belong to their respective authors, and the author and year
+are included in most filenames.
+
 ## Credits
 
-Thanks to the people who created the ROMs included here, including:
-
-- David Winter (Blitz, Connect 4, Merlin, Space Invaders, Maze, and more)
-- Joseph and Joyce Weisbecker (Kaleidoscope, Rocket, Slide, Sum Fun, and more)
-- Carmelo Cortez (Breakout, Craps, Nim, Submarine, and more)
-- Revival Studios (Astro Dodge, Trip8 Demo, Worm V4)
-- zeroZshadow (Particle Demo, Zero Demo, ZeroPong)
-- Sergey Naydenov (Sierpinski, Stars, SQRT Test)
-- Fran Dachille (Tetris), Paul Vervalin (Pong), Andreas Gustafsson (Brix),
-  Matthew Mikolay (timer and RNG tests), Hap (Rush Hour, Fishie,
-  Keypad Test), and many others
-
-See `roms/README.txt` and the filenames for the full list of authors.
+- **Revival Studios**, for compiling the Chip-8 Program Pack (2011) and
+  researching the original authors and release years of its ROMs
+- The ROM authors, including David Winter, Joseph and Joyce Weisbecker,
+  Carmelo Cortez, zeroZshadow, Sergey Naydenov, Fran Dachille, Paul Vervalin,
+  Andreas Gustafsson, Matthew Mikolay, Hap, and many others. See the
+  filenames and `.txt` files in `roms/` for the full list.
 
 ## Goals
 
