@@ -3,3 +3,6 @@
 
 # Compiled Executable
 chip8
+
+# Compile commands for neoVim
+compile_commands.json
