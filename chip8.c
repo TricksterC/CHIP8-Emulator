@@ -130,7 +130,7 @@ bool init_chip8(chip8_t *chip8, const char *rom_name){
     0xF0, 0x80, 0x80, 0x80, 0xF0, // C
     0xE0, 0x90, 0x90, 0x90, 0xE0, // D
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-    0xF0, 0x80, 0xF0, 0x80, 0x80,  // F
+    0xF0, 0x80, 0xF0, 0x80, 0x80, // F
   };
 
   // Load font
@@ -250,6 +250,7 @@ void handle_input(chip8_t *chip8){
 
       case SDL_KEYDOWN:
         switch(event.key.keysym.sym){
+          
           case SDLK_ESCAPE:
             // Escape Key; Exit window & end program
             chip8 -> state = QUIT;
@@ -262,9 +263,10 @@ void handle_input(chip8_t *chip8){
               puts("====== PAUSED ======");  // PAUSED
             } 
             else{
-              chip8 -> state = RUNNING;      // RESUMED
+              chip8 -> state = RUNNING; // RESUMED
+              puts("====== RESUMED ======");
             }
-            return;
+            break;
           
           // Map QWERTY keys to CHIP-8 Keypad 
           case SDLK_1: chip8 -> keypad[0x1] = true; break;
@@ -292,6 +294,7 @@ void handle_input(chip8_t *chip8){
         break;
 
       case SDL_KEYUP:
+        switch(event.key.keysym.sym){
           case SDLK_1: chip8 -> keypad[0x1] = false; break;
           case SDLK_2: chip8 -> keypad[0x2] = false; break;
           case SDLK_3: chip8 -> keypad[0x3] = false; break;
@@ -313,8 +316,12 @@ void handle_input(chip8_t *chip8){
           case SDLK_v: chip8 -> keypad[0xF] = false; break;
           
           default: break;
-    }
+        }
+        break;
 
+      default:
+        break;
+    }
   }
 }
 
@@ -890,10 +897,12 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
         case 0x0A:
           // 0xFX0A: VX = get_key(); Await until a keypress, and store in VX
           bool any_key_pressed = false;
-          for(uint8_t i = 0; i < sizeof chip8 -> keypad; i++){
-            chip8 -> V[chip8 -> inst.X] = i;  // i = key (offset into keypad array)
-            any_key_pressed = true; 
-            break;
+          for(uint8_t i = 0; i < 16; i++){
+            if(chip8 -> keypad[i]){
+              chip8 -> V[chip8 -> inst.X] = i;  // i = key (offset into keypad array)
+              any_key_pressed = true; 
+              break;
+            }
           }
          
           // If no key has been pressed yet, keep getting the current opcode & running the instruction 
@@ -969,7 +978,16 @@ void emulate_instruction(chip8_t *chip8, const config_t config){
 }
 
 // Update CHIP-8 delay and sound timers every 60hz
-void update_timers(&chip8){
+void update_timers(chip8_t *chip8){
+  if(chip8 -> delay_timer > 0) chip8 -> delay_timer--;
+  if(chip8 -> sound_timer > 0){
+    chip8 -> sound_timer--;
+    // TODO: Play sound
+  }
+
+  else{
+    // TOD0: Stop playing sound
+  }
 
 }
 
@@ -1023,10 +1041,10 @@ int main(int argc,char **argv){
     // SDL_Delay(16 - actual time elapsed);
     SDL_Delay(16.67f > time_elapsed ? 16.67 - time_elapsed : 0);
 
-    // Update window with changes
+    // Update window with changes every 60hz
     update_screen(sdl, config, chip8);
     
-    // Update delay and sound timers 
+    // Update delay and sound timers every 60hz 
     update_timers(&chip8);
   }
 
